@@ -1,8 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=clocate
-PKG_VERSION:=$(shell git show -s --format=%cd --date=short)
-PKG_RELEASE:=1
+PKG_RELEASE:=$(AUTORELEASE)
 
 PKG_FILE_DEPENDS:=$(CURDIR)/../..
 

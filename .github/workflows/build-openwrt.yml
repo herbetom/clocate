@@ -1,45 +1,129 @@
-name: OpenWrt Build
+name: Build clocate
 
 on:
   pull_request:
     branches:
       - main
-  push:
+  push: {}
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
-  openwrt-build:
+  build:
     name: ${{ matrix.release }} - ${{ matrix.arch }} build
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         release:
-          - main
-          - 24.10.1
+          - SNAPSHOT
+          #- openwrt-24.10
         arch:
           - x86_64
-          - aarch64_cortex-a53
+          - aarch64_cortex-a53       # (bcm27xx-bcm2710, mediatek-filogic, ...)
+          - mipsel_24kc              # (ramips-mt7620, ramips-mt7621, ramips-mt76x8, ramips-rt305x)
+          - arm_cortex-a7_neon-vfpv4 # (ipq40xx-generic, ...)
+          - mips_24kc                # (ath79-generic, ath79-nand, realtek-rtl839x, realtek-rtl930x, ...)
+          #- powerpc_8548             # (mpc85xx-p1010, mpc85xx-p1020, mpc85xx-p2020)
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: apt tree
-        run: sudo apt-get update; sudo apt-get install tree
+      - name: "install tools"
+        run: "sudo apt-get update; sudo apt-get install openssl"
 
       - name: Build
         uses: openwrt/gh-action-sdk@v9
         env:
-          ARCH: ${{ matrix.arch }}
+          ARCH: ${{ matrix.arch }}-${{ matrix.release }}
+          FEEDNAME: "clocate"
           PACKAGES: "clocate"
-          FEED_DIR: "openwrt"
+          PRIVATE_KEY: "${{ secrets.PRIVATE_KEY }}"
+          INDEX: 1
+          V: "s"
 
-      - name: output tree
-        run: tree -f
+      - name: list generated files
+        run: ls -R bin/
+
+      - name: Store Logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.release }}-${{ matrix.arch}}-logs
+          path: logs/
+
+      - name: "store public key alongside"
+        run: |
+          [[ -n "${{ secrets.PRIVATE_KEY }}" ]] && echo "${{ secrets.PRIVATE_KEY }}" | openssl ec -pubout > bin/packages/${{ matrix.arch}}/repokey.pub
 
       - name: Store packages
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.release }}-${{ matrix.arch}}-packages
+          compression-level: 0
           path: |
-            bin/packages/${{ matrix.arch }}/packages/*.ipk
-            bin/packages/${{ matrix.arch }}/packages/*.apk
+            bin/packages/${{ matrix.arch}}/*/*.ipk
+            bin/packages/${{ matrix.arch}}/*/*.apk
+            bin/packages/${{ matrix.arch}}/*/index.json
+            bin/packages/${{ matrix.arch}}/*/packages.adb
+            bin/packages/${{ matrix.arch}}/repokey.pub
+
+      - name: "generate sha256sums"
+        run: |
+          cd ./bin/packages/${{ matrix.arch}}
+          shasum -a 256 ./*/* > bin/packages/${{ matrix.arch}}/sha256sums
+
+      - name: Attest Image Build Provenance
+        if: github.ref_name == 'main'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-checksums: bin/packages/${{ matrix.arch}}/sha256sums
+
+  combine:
+    name: Combine packages
+    runs-on: ubuntu-24.04
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: "*-packages"
+
+      - name: list all files
+        run: "ls -R"
+
+      - name: list files
+        run: "ls -R ./*-packages || true"
+
+      - name: "combine-artifacts.sh"
+        run: ".github/combine-artifacts.sh"
+
+      - name: list files
+        run: "ls -R combined/ || true"
+
+      - name: Store packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-packages
+          compression-level: 0
+          path: combined/
+
+      - name: Minio Deploy
+        if: (github.ref_name == 'main' && env.S3_DEPLOY == '1' )
+        uses: herbetom/minio-deploy-action@v1
+        with:
+          endpoint: ${{ secrets.MINIO_ENDPOINT }}
+          access_key: ${{ secrets.MINIO_ACCESS_KEY }}
+          secret_key: ${{ secrets.MINIO_SECRET_KEY }}
+          bucket: 'clocate'
+          source_dir: 'combined/'
+          target_dir: '/'
+          extra_args: '--remove'

@@ -18,6 +18,9 @@ jobs:
   build:
     name: ${{ matrix.release }} - ${{ matrix.arch }} build
     runs-on: ubuntu-24.04
+    permissions:
+      id-token: write
+      attestations: write
     strategy:
       fail-fast: false
       matrix:

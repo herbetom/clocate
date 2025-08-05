@@ -64,6 +64,11 @@ jobs:
             echo "${{ secrets.PRIVATE_KEY }}" | openssl ec -pubout > bin/packages/${{ matrix.arch}}/repokey.pub
           fi
 
+      - name: "generate sha256sums"
+        run: |
+          cd ./bin/packages/${{ matrix.arch}}/
+          shasum -a 256 ./*/* > sha256sums
+
       - name: Store packages
         uses: actions/upload-artifact@v4
         with:
@@ -75,11 +80,7 @@ jobs:
             bin/packages/${{ matrix.arch}}/*/index.json
             bin/packages/${{ matrix.arch}}/*/packages.adb
             bin/packages/${{ matrix.arch}}/repokey.pub
-
-      - name: "generate sha256sums"
-        run: |
-          cd ./bin/packages/${{ matrix.arch}}
-          shasum -a 256 ./*/* > bin/packages/${{ matrix.arch}}/sha256sums
+            bin/packages/${{ matrix.arch}}/sha256sums
 
       - name: Attest Image Build Provenance
         if: github.ref_name == 'main'

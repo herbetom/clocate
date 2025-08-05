@@ -120,10 +120,10 @@ jobs:
           path: combined/
 
       - run: echo "${{ github.ref_name }}"
-      - run: echo "${{ env.S3_DEPLOY }}"
+      - run: echo "${{ vars.S3_DEPLOY }}"
 
       - name: Minio Deploy
-        if: github.ref_name == 'github-action' && env.S3_DEPLOY == '1'
+        if: github.ref_name == 'github-action' && vars.S3_DEPLOY == '1'
         uses: herbetom/minio-deploy-action@v1
         with:
           endpoint: ${{ secrets.MINIO_ENDPOINT }}

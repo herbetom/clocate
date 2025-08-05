@@ -60,7 +60,9 @@ jobs:
 
       - name: "store public key alongside"
         run: |
-          [[ -n "${{ secrets.PRIVATE_KEY }}" ]] && echo "${{ secrets.PRIVATE_KEY }}" | openssl ec -pubout > bin/packages/${{ matrix.arch}}/repokey.pub
+          if [[ -n "${{ secrets.PRIVATE_KEY }}" ]]; then
+            echo "${{ secrets.PRIVATE_KEY }}" | openssl ec -pubout > bin/packages/${{ matrix.arch}}/repokey.pub
+          fi
 
       - name: Store packages
         uses: actions/upload-artifact@v4

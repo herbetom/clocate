@@ -90,6 +90,7 @@ jobs:
         uses: actions/attest-build-provenance@v2
         with:
           subject-checksums: bin/packages/${{ matrix.arch}}/sha256sums
+          subject-name: ${{ matrix.arch}}
 
   combine:
     name: Combine packages
@@ -135,5 +136,4 @@ jobs:
           bucket: ${{ vars.MINIO_BUCKET }}
           source_dir: 'combined/'
           target_dir: '/'
-          #extra_args: '--debug'
-          #extra_args: '--remove'
+          extra_args: '--remove'

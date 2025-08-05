@@ -119,8 +119,11 @@ jobs:
           compression-level: 0
           path: combined/
 
+      - run: echo "${{ github.ref_name }}"
+      - run: echo "${{ env.S3_DEPLOY }}"
+
       - name: Minio Deploy
-        if: (github.ref_name == 'main' && env.S3_DEPLOY == '1' )
+        if: github.ref_name == 'github-action' && env.S3_DEPLOY == '1'
         uses: herbetom/minio-deploy-action@v1
         with:
           endpoint: ${{ secrets.MINIO_ENDPOINT }}

@@ -26,7 +26,7 @@ jobs:
       matrix:
         release:
           - SNAPSHOT
-          #- openwrt-24.10
+          - openwrt-24.10
         arch:
           - x86_64
           - aarch64_cortex-a53       # (bcm27xx-bcm2710, mediatek-filogic, ...)

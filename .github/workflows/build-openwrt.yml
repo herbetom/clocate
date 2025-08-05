@@ -83,7 +83,7 @@ jobs:
             bin/packages/${{ matrix.arch}}/sha256sums
 
       - name: Attest Image Build Provenance
-        if: github.ref_name == 'main'
+        if: github.ref_name == 'github-action'
         uses: actions/attest-build-provenance@v2
         with:
           subject-checksums: bin/packages/${{ matrix.arch}}/sha256sums

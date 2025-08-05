@@ -129,7 +129,8 @@ jobs:
           endpoint: ${{ secrets.MINIO_ENDPOINT }}
           access_key: ${{ secrets.MINIO_ACCESS_KEY }}
           secret_key: ${{ secrets.MINIO_SECRET_KEY }}
-          bucket: 'clocate'
+          bucket: ${{ vars.MINIO_BUCKET }}
           source_dir: 'combined/'
           target_dir: '/'
-          extra_args: '--remove'
+          #extra_args: '--debug'
+          #extra_args: '--remove'

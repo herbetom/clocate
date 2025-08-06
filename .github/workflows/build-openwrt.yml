@@ -125,6 +125,14 @@ jobs:
           compression-level: 0
           path: combined/
 
+  test:
+    name: Test
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - run: echo "${{ github.ref_name }}"
+      - run: echo "${{ vars.S3_DEPLOY }}"
+
   deploy:
     name: Deploy
     runs-on: ubuntu-24.04

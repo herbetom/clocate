@@ -129,7 +129,7 @@ jobs:
     name: Test
     runs-on: ubuntu-24.04
     environment: production
-    if: github.ref_name == 'master' && vars.S3_DEPLOY == '1'
+    if: github.ref_name == 'master'
     steps:
       - run: echo "${{ github.ref_name }}"
       - run: echo "${{ vars.S3_DEPLOY }}"

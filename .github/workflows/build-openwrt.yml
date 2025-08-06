@@ -129,7 +129,6 @@ jobs:
     name: Test
     runs-on: ubuntu-24.04
     environment: production
-    if: vars.S3_DEPLOY == '1'
     steps:
       - run: echo "${{ github.ref_name }}"
       - run: echo "${{ vars.S3_DEPLOY }}"
@@ -140,7 +139,6 @@ jobs:
     needs: combine
     environment: production
     concurrency: production
-    if: github.ref_name == 'master' && vars.S3_DEPLOY == '1'
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -151,6 +149,7 @@ jobs:
 
       - name: Minio Deploy
         uses: herbetom/minio-deploy-action@v1
+        if: vars.S3_DEPLOY == '1'
         with:
           endpoint: ${{ secrets.MINIO_ENDPOINT }}
           access_key: ${{ secrets.MINIO_ACCESS_KEY }}

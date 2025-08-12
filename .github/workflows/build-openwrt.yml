@@ -125,6 +125,12 @@ jobs:
           compression-level: 0
           path: combined/
 
+      - name: Upload static as pages artifact
+        id: deployment
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: combined/
+
   deploy:
     name: Deploy
     runs-on: ubuntu-24.04
@@ -151,3 +157,14 @@ jobs:
           source_dir: 'combined-packages'
           target_dir: '/'
           extra_args: '--remove'
+
+  deploy-pages:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-24.04
+    needs: combine
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

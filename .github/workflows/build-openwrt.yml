@@ -131,7 +131,7 @@ jobs:
         with:
           path: combined/
 
-  deploy:
+  deploy-s3:
     name: Deploy
     runs-on: ubuntu-24.04
     needs: combine
@@ -164,6 +164,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-24.04
     needs: combine
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
